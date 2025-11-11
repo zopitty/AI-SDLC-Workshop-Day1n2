@@ -13,30 +13,42 @@ This is a **Next.js 16** todo application with WebAuthn authentication, using **
 
 ## Critical Patterns
 
-### 1. Authentication Flow
+### 1. Authentication Flow (WebAuthn/Passkeys)
 - **WebAuthn only** - no traditional passwords
-- Session tokens stored as HTTP-only cookies via `lib/auth.ts`
+- Uses `@simplewebauthn/server` and `@simplewebauthn/browser` libraries
+- Session tokens stored as HTTP-only cookies via `lib/auth.ts` (JWT with 7-day expiry)
 - Middleware (`middleware.ts`) protects `/` and `/calendar` routes
 - When modifying authenticator logic, **always use `?? 0` for counter field** to handle undefined values:
   ```typescript
   counter: authenticator.counter ?? 0
   ```
 
+**WebAuthn Flow Pattern:**
+1. Client calls `/api/auth/register-options` or `/api/auth/login-options` to get challenge
+2. Client uses `@simplewebauthn/browser` to interact with authenticator
+3. Client posts response to `/api/auth/register-verify` or `/api/auth/login-verify`
+4. Server verifies response using `@simplewebauthn/server` and creates JWT session
+
+**Buffer Encoding:** WebAuthn credentials require base64/base64url conversions. Use `isoBase64URL` from `@simplewebauthn/server/helpers` for credential_id handling.
+
 ### 2. Database Architecture
-**Single source of truth**: `lib/db.ts` exports all database interfaces and CRUD operations.
+**Single source of truth**: `lib/db.ts` exports all database interfaces and CRUD operations (~700 lines).
+
+**Technology:** `better-sqlite3` - synchronous SQLite library (no async/await needed for DB operations). Database file: `todos.db` in project root.
 
 Key tables:
 - `users` → `authenticators` (one-to-many)
-- `users` → `todos` → `subtasks` (one-to-many)
+- `users` → `todos` → `subtasks` (one-to-many with CASCADE delete)
 - `todos` ↔ `tags` (many-to-many via `todo_tags`)
-- `users` → `templates` (reusable todo patterns)
+- `users` → `templates` (reusable todo patterns with JSON-serialized subtasks)
 - `holidays` (Singapore public holidays, timezone-aware)
 
 **When adding database features:**
 - Add interface to `lib/db.ts` first
 - Export DB object with CRUD methods (e.g., `todoDB`, `tagDB`)
-- Use prepared statements for all queries
-- Handle migrations with try-catch `ALTER TABLE` blocks
+- Use prepared statements for all queries (`db.prepare()`)
+- Handle migrations with try-catch `ALTER TABLE` blocks in `db.exec()`
+- **All DB operations are synchronous** - no promises/async needed for queries
 
 ### 3. Singapore Timezone (Mandatory)
 All date/time operations **must** use `lib/timezone.ts`:
@@ -82,7 +94,12 @@ npx playwright test --ui              # Interactive UI mode
 npx playwright test tests/02-todo-crud.spec.ts  # Single test file
 npx playwright show-report            # View HTML report
 ```
-Tests use virtual WebAuthn authenticators (enabled via Chromium flags in `playwright.config.ts`).
+
+**Virtual WebAuthn Authenticators:**
+- Tests use virtual authenticators (configured in `playwright.config.ts` with Chromium flags)
+- Set `timezoneId: 'Asia/Singapore'` in Playwright config to match app timezone
+- Test files organized by feature (01-authentication, 02-todo-crud, etc.) matching `USER_GUIDE.md`
+- Helper class `tests/helpers.ts` provides reusable methods: `createTodo()`, `addSubtask()`, `createTag()`
 
 ### Database Management
 ```bash
@@ -108,14 +125,23 @@ reminder_minutes: todo.reminder_minutes ?? null
 ```
 Recent fix: `app/api/auth/login-verify/route.ts` lines 56 and 93.
 
-### 3. Testing Approach
-Tests are organized by feature (01-authentication, 02-todo-crud, etc.) mirroring `USER_GUIDE.md` sections. Helper class (`tests/helpers.ts`) provides reusable methods like `createTodo()`, `addSubtask()`, `createTag()`.
+### 3. Monolithic UI Pattern
+Main todo page (`app/page.tsx`) is a large (~2200 lines) client component with all features:
+- Single file handles: todos, subtasks, tags, templates, filtering, export/import
+- State management via React hooks (no external state library)
+- All API calls made directly from component using fetch
+- Pattern chosen for simplicity over modularity - keep additions in this file unless creating new routes
 
-### 4. Type Safety
+### 4. Type Safety & Code Generation
 Shared types live in `lib/db.ts` and are imported in both API routes and client components:
 ```typescript
 import { Priority, RecurrencePattern, Todo, Template } from '@/lib/db';
 ```
+
+**GitHub Copilot Integration:**
+- `PRPs/` directory contains detailed prompt files for guided feature development
+- `USER_GUIDE.md` provides comprehensive 2000+ line documentation of all features
+- Use these as reference when adding features or fixing bugs
 
 ## Key Integration Points
 
@@ -129,6 +155,7 @@ import { Priority, RecurrencePattern, Todo, Template } from '@/lib/db';
 - Templates in `templates` table store todo patterns with JSON-serialized subtasks
 - `POST /api/templates/[id]/use` creates todo from template, calculating due date from offset
 - Subtasks JSON structure: `[{ title: string, position: number }]`
+- When creating templates, serialize subtasks array to JSON string before storing
 
 ### Export/Import
 - `GET /api/todos/export` returns JSON with todos, subtasks, and tags
