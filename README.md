@@ -309,6 +309,47 @@ Copilot will:
 2. Check your code against PRP constraints
 3. Suggest fixes aligned with requirements
 
+#### 📊 Feature Dependencies
+
+Understanding how features build on each other:
+
+```
+Authentication (11) → All features require auth
+Todo CRUD (01) → Priority (02), Recurring (03), Subtasks (05), Tags (06)
+Tags (06) → Search/Filtering (08)
+Subtasks (05) → Templates (07)
+Todos (01) → Export/Import (09), Calendar (10)
+```
+
+#### 🎯 Usage Examples
+
+**With GitHub Copilot Chat:**
+```
+"Please implement the tag system. Here's the PRP: [paste content from PRPs/06-tag-system.md]"
+```
+
+**For Bug Fixes:**
+```
+"The recurring todo completion isn't creating the next instance correctly.
+Reference: PRPs/03-recurring-todos.md section on 'Completion Handler'"
+```
+
+**For Testing:**
+```
+"Generate Playwright tests for subtasks based on PRPs/05-subtasks-progress.md
+Testing Requirements section"
+```
+
+**For New Features:**
+```
+"Add a bulk delete feature for completed todos. Follow the patterns in PRPs/01-todo-crud-operations.md"
+```
+
+**For Code Review:**
+```
+"Review my subtask implementation against PRPs/05-subtasks-progress.md acceptance criteria"
+```
+
 ### Step 4: Use Copilot Inline Suggestions
 
 **Scenario**: Add a new API route for todo statistics
