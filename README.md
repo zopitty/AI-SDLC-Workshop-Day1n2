@@ -2,6 +2,8 @@
 
 This walkthrough will guide you from zero to running the Todo App with GitHub Copilot assistance.
 
+Reference : https://ai-sdlc-workshop-day1-production.up.railway.app/login
+
 ---
 
 ## Table of Contents
