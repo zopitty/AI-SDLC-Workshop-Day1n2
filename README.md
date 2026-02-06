@@ -6,6 +6,16 @@ Reference : https://ai-sdlc-workshop-day1-production.up.railway.app/login
 
 ---
 
+## 🎯 Current Development: Template System (PRP 07)
+
+**Quick Start for Template System Implementation**:
+- 📋 **Overview**: [TEMPLATE_SYSTEM_GUIDE.md](TEMPLATE_SYSTEM_GUIDE.md)
+- 📖 **Implementation Plan**: [IMPLEMENTATION_PLAN_TEMPLATE_SYSTEM.md](IMPLEMENTATION_PLAN_TEMPLATE_SYSTEM.md)
+- ✅ **Checklist**: [TEMPLATE_SYSTEM_CHECKLIST.md](TEMPLATE_SYSTEM_CHECKLIST.md)
+- 📐 **PRP Spec**: [PRPs/07-template-system.md](PRPs/07-template-system.md)
+
+---
+
 ## Table of Contents
 1. [Install Visual Studio Code](#1-install-visual-studio-code)
 2. [Install GitHub Copilot](#2-install-github-copilot)
