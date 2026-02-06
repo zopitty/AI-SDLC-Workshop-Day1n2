@@ -1,10 +1,32 @@
 import { test, expect } from '@playwright/test';
+import Database from 'better-sqlite3';
+import path from 'path';
+import fs from 'fs';
 
 test.describe('Priority System', () => {
   test.beforeEach(async ({ page }) => {
+    // Wait for the page to load first (this ensures the database is created)
     await page.goto('/');
+    await expect(page.locator('h1')).toContainText('Todo App');
     
-    // Wait for the page to load
+    // Now clear the database
+    const dbPath = path.join(process.cwd(), 'todos.db');
+    
+    if (fs.existsSync(dbPath)) {
+      const db = new Database(dbPath);
+      
+      try {
+        // Delete all todos
+        db.prepare('DELETE FROM todos').run();
+      } catch (e) {
+        // Table might not exist yet, that's okay
+      }
+      
+      db.close();
+    }
+    
+    // Reload the page to get fresh state
+    await page.reload();
     await expect(page.locator('h1')).toContainText('Todo App');
   });
 
@@ -76,14 +98,17 @@ test.describe('Priority System', () => {
     await page.fill('input[placeholder="Enter todo title..."]', 'High priority task');
     await page.selectOption('select', 'high');
     await page.click('button:has-text("Add Todo")');
+    await expect(page.locator('text=High priority task')).toBeVisible();
 
     await page.fill('input[placeholder="Enter todo title..."]', 'Medium priority task');
     await page.selectOption('select', 'medium');
     await page.click('button:has-text("Add Todo")');
+    await expect(page.locator('text=Medium priority task')).toBeVisible();
 
     await page.fill('input[placeholder="Enter todo title..."]', 'Low priority task');
     await page.selectOption('select', 'low');
     await page.click('button:has-text("Add Todo")');
+    await expect(page.locator('text=Low priority task')).toBeVisible();
 
     // All todos should be visible initially
     await expect(page.locator('text=High priority task')).toBeVisible();
@@ -262,6 +287,6 @@ test.describe('Priority System', () => {
     await page.click('button:has-text("High")');
 
     // Should show empty state
-    await expect(page.locator('text=No high priority tasks.')).toBeVisible();
+    await expect(page.locator('text=No high priority tasks')).toBeVisible();
   });
 });
