@@ -34,7 +34,7 @@ test.describe('Priority System', () => {
     // Fill in the todo form
     await page.fill('input[placeholder="Enter todo title..."]', 'Urgent task');
     await page.selectOption('select', 'high');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     // Wait for the todo to appear
     await expect(page.locator('text=Urgent task')).toBeVisible();
@@ -48,7 +48,7 @@ test.describe('Priority System', () => {
   test('should create todo with medium priority (default)', async ({ page }) => {
     await page.fill('input[placeholder="Enter todo title..."]', 'Regular task');
     // Don't change priority (should default to medium)
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     await expect(page.locator('text=Regular task')).toBeVisible();
 
@@ -60,7 +60,7 @@ test.describe('Priority System', () => {
   test('should create todo with low priority', async ({ page }) => {
     await page.fill('input[placeholder="Enter todo title..."]', 'Low priority task');
     await page.selectOption('select', 'low');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     await expect(page.locator('text=Low priority task')).toBeVisible();
 
@@ -73,7 +73,7 @@ test.describe('Priority System', () => {
     // Create a todo with medium priority
     await page.fill('input[placeholder="Enter todo title..."]', 'Task to change');
     await page.selectOption('select', 'medium');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     await expect(page.locator('text=Task to change')).toBeVisible();
 
@@ -97,17 +97,17 @@ test.describe('Priority System', () => {
     // Create todos with different priorities
     await page.fill('input[placeholder="Enter todo title..."]', 'High priority task');
     await page.selectOption('select', 'high');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
     await expect(page.locator('text=High priority task')).toBeVisible();
 
     await page.fill('input[placeholder="Enter todo title..."]', 'Medium priority task');
     await page.selectOption('select', 'medium');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
     await expect(page.locator('text=Medium priority task')).toBeVisible();
 
     await page.fill('input[placeholder="Enter todo title..."]', 'Low priority task');
     await page.selectOption('select', 'low');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
     await expect(page.locator('text=Low priority task')).toBeVisible();
 
     // All todos should be visible initially
@@ -128,11 +128,11 @@ test.describe('Priority System', () => {
     // Create todos with different priorities
     await page.fill('input[placeholder="Enter todo title..."]', 'High task');
     await page.selectOption('select', 'high');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     await page.fill('input[placeholder="Enter todo title..."]', 'Medium task');
     await page.selectOption('select', 'medium');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     // Click the Medium filter button
     await page.click('button:has-text("Medium")');
@@ -146,11 +146,11 @@ test.describe('Priority System', () => {
     // Create todos with different priorities
     await page.fill('input[placeholder="Enter todo title..."]', 'High task');
     await page.selectOption('select', 'high');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     await page.fill('input[placeholder="Enter todo title..."]', 'Low task');
     await page.selectOption('select', 'low');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     // Click the Low filter button
     await page.click('button:has-text("Low")');
@@ -164,11 +164,11 @@ test.describe('Priority System', () => {
     // Create todos with different priorities
     await page.fill('input[placeholder="Enter todo title..."]', 'High task');
     await page.selectOption('select', 'high');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     await page.fill('input[placeholder="Enter todo title..."]', 'Low task');
     await page.selectOption('select', 'low');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     // Filter by high
     await page.click('button:has-text("High")');
@@ -185,15 +185,15 @@ test.describe('Priority System', () => {
     // Create todos in reverse priority order
     await page.fill('input[placeholder="Enter todo title..."]', 'Low task');
     await page.selectOption('select', 'low');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     await page.fill('input[placeholder="Enter todo title..."]', 'High task');
     await page.selectOption('select', 'high');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     await page.fill('input[placeholder="Enter todo title..."]', 'Medium task');
     await page.selectOption('select', 'medium');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     // Enable priority sorting
     await page.check('input[type="checkbox"]');
@@ -214,12 +214,12 @@ test.describe('Priority System', () => {
     // Create high priority todo
     await page.fill('input[placeholder="Enter todo title..."]', 'High task');
     await page.selectOption('select', 'high');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     // Create low priority todo
     await page.fill('input[placeholder="Enter todo title..."]', 'Low task');
     await page.selectOption('select', 'low');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     // Enable priority sorting
     await page.check('input[type="checkbox"]');
@@ -261,19 +261,19 @@ test.describe('Priority System', () => {
     // Create 2 high, 1 medium, 1 low priority todos
     await page.fill('input[placeholder="Enter todo title..."]', 'High 1');
     await page.selectOption('select', 'high');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     await page.fill('input[placeholder="Enter todo title..."]', 'High 2');
     await page.selectOption('select', 'high');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     await page.fill('input[placeholder="Enter todo title..."]', 'Medium 1');
     await page.selectOption('select', 'medium');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     await page.fill('input[placeholder="Enter todo title..."]', 'Low 1');
     await page.selectOption('select', 'low');
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
 
     // Check the counts in filter buttons
     await expect(page.locator('button:has-text("All (4)")')).toBeVisible();
