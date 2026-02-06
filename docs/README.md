@@ -1,25 +1,80 @@
 # Implementation Guides
 
-This directory contains step-by-step implementation guides for the Todo App features, based on the PRPs (Product Requirement Prompts).
+This directory contains comprehensive documentation for implementing the Calendar View feature (PRP 10).
 
-## Available Guides
+## 📚 Documentation Overview
 
-### [Calendar View Implementation Guide](./calendar-view-implementation-guide.md)
+### For Developers Starting Implementation
+
+1. **[Developer Onboarding Guide](./calendar-view-developer-onboarding.md)** ⭐ START HERE
+   - Step-by-step onboarding for new developers
+   - Daily task breakdown with time estimates
+   - Testing checklist and troubleshooting
+   - Definition of done criteria
+
+2. **[Implementation Guide](./calendar-view-implementation-guide.md)**
+   - Complete code examples for all components
+   - Database setup and API layer
+   - UI component implementation
+   - Full testing strategy
+
+3. **[Technical Specification](./calendar-view-technical-spec.md)**
+   - Architecture decision records
+   - Data flow diagrams
+   - Performance characteristics
+   - Security considerations
+
+### Quick Reference
+
+4. **[Quick Start Guide](../CALENDAR_VIEW_QUICK_START.md)**
+   - High-level checklist
+   - Key code snippets
+   - Acceptance criteria
+   - Resource links
+
+---
+
+## Calendar View Feature
+
 **Status**: ✅ Ready for Implementation  
 **Based on**: PRP 10 - Calendar View  
 **Estimated Time**: 2-3 days (17-24 hours)  
-**Dependencies**: PRP 01, 02, 11
+**Dependencies**: PRP 01 (Todos), PRP 02 (Priority), PRP 11 (Auth)
 
-Complete step-by-step guide for implementing the monthly calendar visualization feature with Singapore holidays.
+### What You'll Build
 
-**Includes**:
+A monthly calendar view at `/calendar` that:
+- Displays todos on their due dates
+- Highlights Singapore public holidays
+- Supports month navigation (prev/next)
+- Shows today indicator
+- Allows expanding days to see todo details
+- Navigates from calendar to main todo list
+
+### Key Features
 - Database setup (holidays table, seed script)
-- API layer (GET /api/holidays)
-- Calendar page implementation (React components)
-- Calendar grid generation logic
-- Styling and accessibility
-- E2E testing strategy
-- Deployment considerations
+- API layer (GET /api/holidays with date range filtering)
+- Calendar page implementation (React client component)
+- Calendar grid generation logic (35-42 day layout)
+- Styling and accessibility (keyboard nav, screen readers)
+- E2E testing strategy (Playwright tests)
+- Deployment considerations (migration, performance)
+
+---
+
+## Implementation Phases Summary
+
+| Phase | Task | Time | Key Deliverables |
+|-------|------|------|------------------|
+| 1 | Database Layer | 2-3h | Holiday interface, table schema, CRUD methods, seed script |
+| 2 | API Layer | 1-2h | GET /api/holidays endpoint with validation |
+| 3 | Calendar Page | 2-3h | app/calendar/page.tsx, middleware protection |
+| 4 | UI Components | 4-5h | CalendarGrid, CalendarDayCell, expand/collapse |
+| 5 | Styling | 2-3h | Tailwind CSS, today/holiday styling, dark mode |
+| 6 | Accessibility | 1-2h | Keyboard nav, ARIA labels, screen reader |
+| 7 | Testing | 3-4h | E2E tests, manual testing, verification |
+
+**Total**: 17-24 hours (2-3 days)
 
 ---
 
