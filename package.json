@@ -1,0 +1,48 @@
+{
+  "name": "ai-sdlc-workshop-day1n2",
+  "version": "1.0.0",
+  "description": "This walkthrough will guide you from zero to running the Todo App with GitHub Copilot assistance.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zopitty/AI-SDLC-Workshop-Day1n2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zopitty/AI-SDLC-Workshop-Day1n2/issues"
+  },
+  "homepage": "https://github.com/zopitty/AI-SDLC-Workshop-Day1n2#readme",
+  "dependencies": {
+    "@simplewebauthn/browser": "^13.2.2",
+    "@simplewebauthn/server": "^13.2.2",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.2.1",
+    "@types/react": "^19.2.13",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.24",
+    "better-sqlite3": "^12.6.2",
+    "jsonwebtoken": "^9.0.3",
+    "next": "^16.1.6",
+    "postcss": "^8.5.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.1",
+    "@tailwindcss/postcss": "^4.1.18"
+  }
+}
