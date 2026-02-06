@@ -25,14 +25,14 @@ async function testSubtasks() {
     
     await page.fill('input#username', 'testuser');
     await page.click('button[type="submit"]');
-    await page.waitForSelector('h1:has-text("My Todos")', { timeout: 5000 });
+    await page.waitForSelector('h1:has-text("Todo App")', { timeout: 5000 });
     console.log('✅ Login successful\n');
     await page.screenshot({ path: 'test-screenshots/02-logged-in.png' });
 
     // Step 2: Create a todo
     console.log('📝 Step 2: Creating a todo...');
-    await page.fill('input[placeholder*="What needs to be done"]', 'Complete project presentation');
-    await page.click('button:has-text("Add Todo")');
+    await page.fill('input[placeholder*="Add a new todo"]', 'Complete project presentation');
+    await page.click('button:has-text("Add")');
     await page.waitForTimeout(500);
     await page.screenshot({ path: 'test-screenshots/03-todo-created.png' });
     
@@ -49,7 +49,7 @@ async function testSubtasks() {
     await page.waitForTimeout(500);
     await page.screenshot({ path: 'test-screenshots/04-todo-expanded.png' });
     
-    const subtaskFormVisible = await page.locator('input[placeholder*="Add a subtask"]').isVisible();
+    const subtaskFormVisible = await page.locator('input[placeholder*="Add subtask"]').isVisible();
     if (!subtaskFormVisible) {
       throw new Error('Subtask form not visible after expanding');
     }
@@ -57,7 +57,7 @@ async function testSubtasks() {
 
     // Step 4: Add first subtask
     console.log('📝 Step 4: Adding first subtask...');
-    await page.fill('input[placeholder*="Add a subtask"]', 'Create slides');
+    await page.fill('input[placeholder*="Add subtask"]', 'Create slides');
     await page.click('button:has-text("+ Add")');
     await page.waitForTimeout(500);
     await page.screenshot({ path: 'test-screenshots/05-subtask-1-added.png' });
@@ -70,7 +70,7 @@ async function testSubtasks() {
 
     // Step 5: Add second subtask
     console.log('📝 Step 5: Adding second subtask...');
-    await page.fill('input[placeholder*="Add a subtask"]', 'Rehearse speech');
+    await page.fill('input[placeholder*="Add subtask"]', 'Rehearse speech');
     await page.click('button:has-text("+ Add")');
     await page.waitForTimeout(500);
     
@@ -82,7 +82,7 @@ async function testSubtasks() {
 
     // Step 6: Add third subtask
     console.log('📝 Step 6: Adding third subtask...');
-    await page.fill('input[placeholder*="Add a subtask"]', 'Print handouts');
+    await page.fill('input[placeholder*="Add subtask"]', 'Print handouts');
     await page.click('button:has-text("+ Add")');
     await page.waitForTimeout(500);
     await page.screenshot({ path: 'test-screenshots/06-all-subtasks-added.png' });
@@ -167,7 +167,7 @@ async function testSubtasks() {
     await page.waitForTimeout(500);
     await page.screenshot({ path: 'test-screenshots/11-todo-collapsed.png' });
     
-    const subtaskFormHidden = await page.locator('input[placeholder*="Add a subtask"]').isHidden();
+    const subtaskFormHidden = await page.locator('input[placeholder*="Add subtask"]').isHidden();
     if (!subtaskFormHidden) {
       throw new Error('Subtask form still visible after collapsing');
     }
