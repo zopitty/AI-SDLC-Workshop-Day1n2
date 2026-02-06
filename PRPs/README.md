@@ -61,6 +61,9 @@ This directory contains detailed Product Requirement Prompts split by feature fo
    - Advanced search (title + tags)
    - Multi-criteria filtering
    - Client-side performance
+   - **📦 [Implementation Guide](IMPLEMENTATION-08-search-filtering.md)** - Complete code examples
+   - **🚀 [Quick Start](../QUICK_START_08.md)** - 30-minute implementation guide
+   - **💻 [Reference Implementation](../reference-implementation/)** - Working code samples
 
 9. **[09-export-import.md](09-export-import.md)** - Export & Import
     - JSON-based backup/restore
