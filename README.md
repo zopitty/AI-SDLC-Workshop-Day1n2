@@ -13,6 +13,16 @@ Reference : https://ai-sdlc-workshop-day1-production.up.railway.app/login
 - 📖 **Implementation Plan**: [IMPLEMENTATION_PLAN_TEMPLATE_SYSTEM.md](IMPLEMENTATION_PLAN_TEMPLATE_SYSTEM.md)
 - ✅ **Checklist**: [TEMPLATE_SYSTEM_CHECKLIST.md](TEMPLATE_SYSTEM_CHECKLIST.md)
 - 📐 **PRP Spec**: [PRPs/07-template-system.md](PRPs/07-template-system.md)
+## 🚀 Quick Links
+
+- **📚 Implementation Guides**: Complete documentation for implementing features
+  - [Calendar View Package](CALENDAR_VIEW_PACKAGE.md) - Complete implementation guide for PRP 10
+  - [Developer Onboarding](docs/calendar-view-developer-onboarding.md) - Start here for calendar feature
+  - [All Implementation Docs](docs/) - Full documentation suite
+
+- **📖 Product Requirements**: Feature specifications and architecture
+  - [PRPs Directory](PRPs/) - All 11 feature specifications
+  - [Architecture Overview](PRPs/ARCHITECTURE.md) - System design summary
 
 ---
 
