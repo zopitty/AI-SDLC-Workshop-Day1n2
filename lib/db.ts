@@ -210,7 +210,7 @@ export const todoDB = {
 
     if (fields.length === 0) return false;
 
-    fields.push('updated_at = datetime("now")');
+    fields.push('updated_at = datetime(\'now\')');
     values.push(id, userId);
 
     const stmt = db.prepare(`
