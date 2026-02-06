@@ -65,7 +65,8 @@ export async function PUT(
     return NextResponse.json({ subtask: updatedSubtask });
   } catch (error) {
     console.error('Error updating subtask:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Stack:', (error as Error).stack);
+    return NextResponse.json({ error: 'Internal server error', details: (error as Error).message }, { status: 500 });
   }
 }
 

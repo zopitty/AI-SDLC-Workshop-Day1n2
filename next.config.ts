@@ -1,17 +1,10 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  experimental: {
-    turbo: {},
+  turbopack: {
+    resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
   },
-  webpack: (config) => {
-    // Handle better-sqlite3 native module
-    config.externals = config.externals || [];
-    config.externals.push({
-      'better-sqlite3': 'commonjs better-sqlite3'
-    });
-    return config;
-  },
+  serverExternalPackages: ['better-sqlite3'],
 };
 
 export default nextConfig;

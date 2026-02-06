@@ -12,27 +12,29 @@
     "test:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@simplewebauthn/browser": "^11.0.0",
+    "@simplewebauthn/server": "^11.0.0",
+    "@tailwindcss/postcss": "^4.1.18",
+    "autoprefixer": "^10.4.24",
+    "better-sqlite3": "^11.7.0",
+    "date-fns-tz": "^3.2.0",
+    "jsonwebtoken": "^9.0.2",
     "next": "^16.1.6",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@simplewebauthn/server": "^11.0.0",
-    "@simplewebauthn/browser": "^11.0.0",
-    "better-sqlite3": "^11.7.0",
-    "jsonwebtoken": "^9.0.2",
-    "date-fns-tz": "^3.2.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/better-sqlite3": "^7.6.11",
-    "@types/jsonwebtoken": "^9.0.7",
-    "typescript": "^5.6.0",
-    "tailwindcss": "^4.0.0",
-    "postcss": "^8.4.49",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.1.6",
-    "@playwright/test": "^1.49.0"
+    "postcss": "^8.4.49",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.0"
   },
   "repository": {
     "type": "git",
