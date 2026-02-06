@@ -4,15 +4,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { todoDB, Priority } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { todoDB, userDB, Priority } from '@/lib/db';
+import { getDemoSession } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+    const session = await getDemoSession();
+    
+    // Ensure demo user exists in database
+    userDB.getOrCreate(session.username);
 
     const { searchParams } = new URL(request.url);
     const priority = searchParams.get('priority') as Priority | null;
@@ -33,10 +33,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+    const session = await getDemoSession();
+    
+    // Ensure demo user exists in database
+    userDB.getOrCreate(session.username);
 
     const body = await request.json();
     const { title, due_date, priority } = body;

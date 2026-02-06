@@ -5,8 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { todoDB, Priority } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { todoDB, userDB, Priority } from '@/lib/db';
+import { getDemoSession } from '@/lib/auth';
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -14,10 +14,10 @@ type RouteParams = {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+    const session = await getDemoSession();
+    
+    // Ensure demo user exists in database
+    userDB.getOrCreate(session.username);
 
     const { id } = await params;
     const todo = todoDB.findById(parseInt(id));
@@ -39,10 +39,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+    const session = await getDemoSession();
+    
+    // Ensure demo user exists in database
+    userDB.getOrCreate(session.username);
 
     const { id } = await params;
     const todo = todoDB.findById(parseInt(id));
@@ -89,10 +89,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+    const session = await getDemoSession();
+    
+    // Ensure demo user exists in database
+    userDB.getOrCreate(session.username);
 
     const { id } = await params;
     const todo = todoDB.findById(parseInt(id));

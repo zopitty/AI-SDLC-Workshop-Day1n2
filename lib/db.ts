@@ -75,6 +75,14 @@ export const userDB = {
     const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
     return stmt.get(username) as User | null;
   },
+
+  getOrCreate: (username: string): User => {
+    let user = userDB.findByUsername(username);
+    if (!user) {
+      user = userDB.create(username);
+    }
+    return user;
+  },
 };
 
 // Todo operations
