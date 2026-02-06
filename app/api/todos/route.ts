@@ -1,47 +1,40 @@
-/**
- * GET /api/todos - List all todos for current user
- * POST /api/todos - Create a new todo
- */
-
 import { NextRequest, NextResponse } from 'next/server';
-import { todoDB, userDB, Priority } from '@/lib/db';
-import { getDemoSession } from '@/lib/auth';
+import { getSession } from '@/lib/auth';
+import { todoDB, Priority, RecurrencePattern } from '@/lib/db';
 
+/**
+ * GET /api/todos
+ * List all todos for authenticated user
+ */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getDemoSession();
-    
-    // Ensure demo user exists in database
-    userDB.getOrCreate(session.username);
-
-    const { searchParams } = new URL(request.url);
-    const priority = searchParams.get('priority') as Priority | null;
-
-    let todos;
-    if (priority && ['high', 'medium', 'low'].includes(priority)) {
-      todos = todoDB.listByPriority(session.userId, priority);
-    } else {
-      todos = todoDB.list(session.userId);
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
+    const todos = todoDB.list(session.userId);
     return NextResponse.json({ todos });
   } catch (error) {
-    console.error('GET /api/todos error:', error);
+    console.error('Error fetching todos:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
+/**
+ * POST /api/todos
+ * Create a new todo
+ */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getDemoSession();
-    
-    // Ensure demo user exists in database
-    userDB.getOrCreate(session.username);
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
 
     const body = await request.json();
-    const { title, due_date, priority } = body;
+    const { title, priority, due_date, is_recurring, recurrence_pattern, reminder_minutes } = body;
 
-    // Validation
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
@@ -50,19 +43,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Title must be 500 characters or less' }, { status: 400 });
     }
 
-    if (priority && !['high', 'medium', 'low'].includes(priority)) {
-      return NextResponse.json({ error: 'Invalid priority. Must be high, medium, or low.' }, { status: 400 });
-    }
-
     const todo = todoDB.create(session.userId, {
-      title,
-      due_date: due_date || null,
+      title: title.trim(),
       priority: priority || 'medium',
+      due_date: due_date || null,
+      is_recurring: is_recurring || false,
+      recurrence_pattern: recurrence_pattern || null,
+      reminder_minutes: reminder_minutes || null,
     });
 
     return NextResponse.json({ todo }, { status: 201 });
   } catch (error) {
-    console.error('POST /api/todos error:', error);
+    console.error('Error creating todo:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

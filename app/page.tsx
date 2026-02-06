@@ -1,390 +1,425 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Priority, Todo } from '@/lib/db';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-// Priority Badge Component
-function PriorityBadge({ 
-  priority, 
-  onClick, 
-  size = 'sm' 
-}: { 
-  priority: Priority; 
-  onClick?: () => void; 
-  size?: 'sm' | 'md';
-}) {
-  const colors = {
-    high: 'bg-red-500 text-white',
-    medium: 'bg-yellow-500 text-white',
-    low: 'bg-green-500 text-white',
-  };
+export default function HomePage() {
+  const [username, setUsername] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
 
-  const sizeClasses = {
-    sm: 'px-2 py-1 text-xs',
-    md: 'px-3 py-1.5 text-sm',
-  };
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
 
-  return (
-    <span
-      className={`rounded-full font-medium ${colors[priority]} ${sizeClasses[size]} ${
-        onClick ? 'cursor-pointer hover:opacity-80' : ''
-      }`}
-      onClick={onClick}
-      aria-label={`Priority: ${priority}`}
-    >
-      {priority.charAt(0).toUpperCase() + priority.slice(1)}
-    </span>
-  );
-}
-
-// Priority Selector Component
-function PrioritySelector({
-  value,
-  onChange,
-  disabled = false,
-}: {
-  value: Priority;
-  onChange: (priority: Priority) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value as Priority)}
-      disabled={disabled}
-      className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    >
-      <option value="high">High</option>
-      <option value="medium">Medium</option>
-      <option value="low">Low</option>
-    </select>
-  );
-}
-
-// Priority Filter Component
-function PriorityFilter({
-  todos,
-  selected,
-  onChange,
-}: {
-  todos: Todo[];
-  selected: Priority | 'all';
-  onChange: (filter: Priority | 'all') => void;
-}) {
-  const counts = {
-    all: todos.length,
-    high: todos.filter((t) => t.priority === 'high').length,
-    medium: todos.filter((t) => t.priority === 'medium').length,
-    low: todos.filter((t) => t.priority === 'low').length,
-  };
-
-  const filters: Array<{ label: string; value: Priority | 'all' }> = [
-    { label: 'All', value: 'all' },
-    { label: 'High', value: 'high' },
-    { label: 'Medium', value: 'medium' },
-    { label: 'Low', value: 'low' },
-  ];
-
-  return (
-    <div className="flex gap-2 mb-6">
-      {filters.map((filter) => (
-        <button
-          key={filter.value}
-          onClick={() => onChange(filter.value)}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            selected === filter.value
-              ? 'bg-blue-500 text-white'
-              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-          }`}
-        >
-          {filter.label}{' '}
-          <span className="ml-1 text-sm">({counts[filter.value]})</span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// Main Page Component
-export default function Home() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [title, setTitle] = useState('');
-  const [priority, setPriority] = useState<Priority>('medium');
-  const [dueDate, setDueDate] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
-  const [sortByPriority, setSortByPriority] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('sortByPriority') === 'true';
+      if (response.ok) {
+        setIsLoggedIn(true);
+        router.refresh();
+      } else {
+        alert('Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Login error');
     }
-    return false;
-  });
-  const [loading, setLoading] = useState(true);
+  };
 
-  // Fetch todos on mount
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-96">
+          <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
+            Todo App
+          </h1>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                Username
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your username"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
+            >
+              Login / Register
+            </button>
+          </form>
+          <p className="mt-4 text-xs text-gray-500 text-center">
+            Enter any username to login or create a new account
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <TodoApp />;
+}
+
+// Todo App Component with Subtasks
+function TodoApp() {
+  const [todos, setTodos] = useState<any[]>([]);
+  const [newTodoTitle, setNewTodoTitle] = useState('');
+  const [expandedTodoId, setExpandedTodoId] = useState<number | null>(null);
+  const router = useRouter();
+
   useEffect(() => {
     fetchTodos();
   }, []);
 
-  // Save sort preference to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('sortByPriority', sortByPriority.toString());
-    }
-  }, [sortByPriority]);
-
   const fetchTodos = async () => {
     try {
       const response = await fetch('/api/todos');
-      const data = await response.json();
-      setTodos(data.todos || []);
+      if (response.ok) {
+        const data = await response.json();
+        setTodos(data.todos);
+      }
     } catch (error) {
-      console.error('Failed to fetch todos:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching todos:', error);
     }
   };
 
-  const addTodo = async (e: React.FormEvent) => {
+  const createTodo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    
+    if (!newTodoTitle.trim()) return;
 
     try {
       const response = await fetch('/api/todos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          priority,
-          due_date: dueDate || null,
-        }),
+        body: JSON.stringify({ title: newTodoTitle }),
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setTodos([data.todo, ...todos]);
-        setTitle('');
-        setPriority('medium');
-        setDueDate('');
+        setNewTodoTitle('');
+        fetchTodos();
       }
     } catch (error) {
-      console.error('Failed to add todo:', error);
+      console.error('Error creating todo:', error);
     }
   };
 
-  const updateTodo = async (
-    id: number,
-    updates: Partial<Pick<Todo, 'title' | 'completed' | 'priority'>>
-  ) => {
+  const toggleTodo = async (id: number, completed: boolean) => {
     try {
-      const response = await fetch(`/api/todos/${id}`, {
+      await fetch(`/api/todos/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
+        body: JSON.stringify({ completed: !completed }),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTodos(todos.map((t) => (t.id === id ? data.todo : t)));
-      }
+      fetchTodos();
     } catch (error) {
-      console.error('Failed to update todo:', error);
+      console.error('Error toggling todo:', error);
     }
   };
 
   const deleteTodo = async (id: number) => {
-    if (!confirm('Delete this todo? This cannot be undone.')) return;
+    if (!confirm('Delete this todo? All subtasks will be deleted too.')) return;
 
     try {
-      const response = await fetch(`/api/todos/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setTodos(todos.filter((t) => t.id !== id));
-      }
+      await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+      fetchTodos();
     } catch (error) {
-      console.error('Failed to delete todo:', error);
+      console.error('Error deleting todo:', error);
     }
   };
 
-  // Filtered and sorted todos
-  const filteredTodos = useMemo(() => {
-    let result = todos;
-
-    // Apply priority filter
-    if (priorityFilter !== 'all') {
-      result = result.filter((t) => t.priority === priorityFilter);
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      console.error('Logout error:', error);
     }
+  };
 
-    // Apply priority sorting
-    if (sortByPriority) {
-      result = [...result].sort((a, b) => {
-        // Completed todos go to bottom
-        if (a.completed !== b.completed) return a.completed ? 1 : -1;
-
-        // Priority order: high > medium > low
-        const priorityOrder: Record<Priority, number> = { high: 0, medium: 1, low: 2 };
-        if (a.priority !== b.priority) {
-          return priorityOrder[a.priority] - priorityOrder[b.priority];
-        }
-
-        // Within same priority, newest first
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-    }
-
-    return result;
-  }, [todos, priorityFilter, sortByPriority]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
-      </div>
-    );
-  }
+  const toggleExpand = (todoId: number) => {
+    setExpandedTodoId(expandedTodoId === todoId ? null : todoId);
+  };
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-4xl font-bold text-gray-900 mb-8">Todo App</h1>
-
-      {/* Add Todo Form */}
-      <form onSubmit={addTodo} className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-              What needs to be done?
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter todo title..."
-              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              maxLength={500}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
-                Priority
-              </label>
-              <PrioritySelector value={priority} onChange={setPriority} />
-            </div>
-
-            <div>
-              <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
-                Due Date (optional)
-              </label>
-              <input
-                id="dueDate"
-                type="datetime-local"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900">My Todos</h1>
           <button
-            type="submit"
-            className="w-full bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+            onClick={handleLogout}
+            className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
-            Add Todo
+            Logout
           </button>
         </div>
-      </form>
 
-      {/* Priority Filter */}
-      <PriorityFilter
-        todos={todos}
-        selected={priorityFilter}
-        onChange={setPriorityFilter}
-      />
+        {/* Add Todo Form */}
+        <form onSubmit={createTodo} className="mb-8 bg-white p-6 rounded-lg shadow">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newTodoTitle}
+              onChange={(e) => setNewTodoTitle(e.target.value)}
+              placeholder="What needs to be done?"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              type="submit"
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+            >
+              Add Todo
+            </button>
+          </div>
+        </form>
 
-      {/* Sort Toggle */}
-      <div className="mb-6">
-        <label className="flex items-center gap-2 cursor-pointer">
+        {/* Todo List */}
+        <div className="space-y-3">
+          {todos.map((todo) => (
+            <TodoItem
+              key={todo.id}
+              todo={todo}
+              isExpanded={expandedTodoId === todo.id}
+              onToggle={() => toggleTodo(todo.id, todo.completed)}
+              onDelete={() => deleteTodo(todo.id)}
+              onToggleExpand={() => toggleExpand(todo.id)}
+              onUpdate={fetchTodos}
+            />
+          ))}
+          {todos.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              No todos yet. Create your first one above!
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// TodoItem Component with Subtasks
+function TodoItem({
+  todo,
+  isExpanded,
+  onToggle,
+  onDelete,
+  onToggleExpand,
+  onUpdate,
+}: any) {
+  const [subtasks, setSubtasks] = useState<any[]>([]);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [progress, setProgress] = useState({ total: 0, completed: 0, percentage: 0 });
+
+  useEffect(() => {
+    if (isExpanded) {
+      fetchSubtasks();
+    }
+  }, [isExpanded]);
+
+  useEffect(() => {
+    calculateProgress();
+  }, [subtasks]);
+
+  const fetchSubtasks = async () => {
+    try {
+      const response = await fetch(`/api/todos/${todo.id}/subtasks`);
+      if (response.ok) {
+        const data = await response.json();
+        setSubtasks(data.subtasks);
+      }
+    } catch (error) {
+      console.error('Error fetching subtasks:', error);
+    }
+  };
+
+  const calculateProgress = () => {
+    const total = subtasks.length;
+    const completed = subtasks.filter((s: any) => s.completed).length;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    setProgress({ total, completed, percentage });
+  };
+
+  const createSubtask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newSubtaskTitle.trim()) return;
+
+    try {
+      const response = await fetch(`/api/todos/${todo.id}/subtasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newSubtaskTitle }),
+      });
+
+      if (response.ok) {
+        setNewSubtaskTitle('');
+        fetchSubtasks();
+      }
+    } catch (error) {
+      console.error('Error creating subtask:', error);
+    }
+  };
+
+  const toggleSubtask = async (subtaskId: number, completed: boolean) => {
+    try {
+      await fetch(`/api/subtasks/${subtaskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: !completed }),
+      });
+      fetchSubtasks();
+    } catch (error) {
+      console.error('Error toggling subtask:', error);
+    }
+  };
+
+  const deleteSubtask = async (subtaskId: number) => {
+    try {
+      await fetch(`/api/subtasks/${subtaskId}`, { method: 'DELETE' });
+      fetchSubtasks();
+    } catch (error) {
+      console.error('Error deleting subtask:', error);
+    }
+  };
+
+  const priorityColors = {
+    high: 'bg-red-100 text-red-800 border-red-200',
+    medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    low: 'bg-blue-100 text-blue-800 border-blue-200',
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+      {/* Todo Header */}
+      <div className="p-4">
+        <div className="flex items-start gap-3">
           <input
             type="checkbox"
-            checked={sortByPriority}
-            onChange={(e) => setSortByPriority(e.target.checked)}
-            className="w-4 h-4 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            checked={todo.completed}
+            onChange={onToggle}
+            className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
-          <span className="text-sm font-medium text-gray-700">
-            Sort by priority (high → medium → low)
-          </span>
-        </label>
-      </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <h3
+                className={`text-lg font-medium ${
+                  todo.completed ? 'line-through text-gray-500' : 'text-gray-900'
+                }`}
+              >
+                {todo.title}
+              </h3>
+              <span
+                className={`px-2 py-1 text-xs font-medium rounded border ${
+                  priorityColors[todo.priority as keyof typeof priorityColors]
+                }`}
+              >
+                {todo.priority}
+              </span>
+            </div>
 
-      {/* Todo List */}
-      <div className="space-y-3">
-        {filteredTodos.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
-            {priorityFilter === 'all'
-              ? 'No todos yet. Add your first task above!'
-              : `No ${priorityFilter} priority tasks.`}
-          </div>
-        ) : (
-          filteredTodos.map((todo) => (
-            <div
-              key={todo.id}
-              className={`bg-white rounded-lg shadow-md p-4 flex items-start gap-4 ${
-                todo.completed ? 'opacity-60' : ''
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={todo.completed}
-                onChange={(e) => updateTodo(todo.id, { completed: e.target.checked })}
-                className="mt-1 w-5 h-5 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-              />
-
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <PriorityBadge priority={todo.priority} />
-                  {todo.due_date && (
-                    <span className="text-xs text-gray-500">
-                      Due: {new Date(todo.due_date).toLocaleString('en-US', {
-                        timeZone: 'Asia/Singapore',
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  )}
+            {/* Progress Bar (only if subtasks exist) */}
+            {isExpanded && progress.total > 0 && (
+              <div className="mb-3">
+                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>
+                    {progress.completed}/{progress.total} completed
+                  </span>
+                  <span>{progress.percentage}%</span>
                 </div>
-
-                <h3
-                  className={`text-lg font-medium ${
-                    todo.completed ? 'line-through text-gray-500' : 'text-gray-900'
-                  }`}
-                >
-                  {todo.title}
-                </h3>
-
-                <div className="mt-2 flex items-center gap-4">
-                  <PrioritySelector
-                    value={todo.priority}
-                    onChange={(newPriority) => updateTodo(todo.id, { priority: newPriority })}
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all ${
+                      progress.percentage === 100 ? 'bg-green-600' : 'bg-blue-600'
+                    }`}
+                    style={{ width: `${progress.percentage}%` }}
                   />
-
-                  <button
-                    onClick={() => deleteTodo(todo.id)}
-                    className="text-sm text-red-600 hover:text-red-800 font-medium"
-                  >
-                    Delete
-                  </button>
                 </div>
               </div>
-            </div>
-          ))
-        )}
+            )}
+
+            {/* Subtasks Section */}
+            {isExpanded && (
+              <div className="mt-4 space-y-2">
+                {subtasks.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">No subtasks yet. Add one below.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {subtasks.map((subtask: any) => (
+                      <div
+                        key={subtask.id}
+                        className="flex items-center gap-2 p-2 bg-gray-50 rounded"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={subtask.completed}
+                          onChange={() => toggleSubtask(subtask.id, subtask.completed)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span
+                          className={`flex-1 text-sm ${
+                            subtask.completed ? 'line-through text-gray-500' : 'text-gray-700'
+                          }`}
+                        >
+                          {subtask.title}
+                        </span>
+                        <button
+                          onClick={() => deleteSubtask(subtask.id)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add Subtask Form */}
+                <form onSubmit={createSubtask} className="flex gap-2 mt-3">
+                  <input
+                    type="text"
+                    value={newSubtaskTitle}
+                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    placeholder="Add a subtask..."
+                    className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    + Add
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onToggleExpand}
+              className="text-gray-500 hover:text-gray-700 text-sm font-medium"
+            >
+              {isExpanded ? '▼' : '▶'}
+            </button>
+            <button
+              onClick={onDelete}
+              className="text-red-600 hover:text-red-800"
+            >
+              🗑
+            </button>
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

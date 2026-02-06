@@ -1,38 +1,25 @@
-/**
- * Singapore Timezone Utilities
- * All date/time operations in the app must use Singapore timezone (Asia/Singapore)
- */
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 
 const SINGAPORE_TZ = 'Asia/Singapore';
 
 /**
- * Get current date/time in Singapore timezone
+ * Get current time in Singapore timezone
  */
 export function getSingaporeNow(): Date {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: SINGAPORE_TZ }));
+  return toZonedTime(new Date(), SINGAPORE_TZ);
 }
 
 /**
- * Format a date to Singapore timezone string
+ * Format a date in Singapore timezone
  */
-export function formatSingaporeDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
-  return date.toLocaleString('en-US', { 
-    timeZone: SINGAPORE_TZ,
-    ...options 
-  });
+export function formatSingaporeDate(date: Date | string, format: string = 'PPpp'): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return formatInTimeZone(dateObj, SINGAPORE_TZ, format);
 }
 
 /**
- * Convert a date to ISO string in Singapore timezone
+ * Convert a date to Singapore timezone ISO string
  */
 export function toSingaporeISO(date: Date): string {
-  return new Date(date.toLocaleString('en-US', { timeZone: SINGAPORE_TZ })).toISOString();
-}
-
-/**
- * Parse a date string as Singapore timezone
- */
-export function parseSingaporeDate(dateString: string): Date {
-  const date = new Date(dateString);
-  return new Date(date.toLocaleString('en-US', { timeZone: SINGAPORE_TZ }));
+  return formatInTimeZone(date, SINGAPORE_TZ, "yyyy-MM-dd'T'HH:mm:ssXXX");
 }
