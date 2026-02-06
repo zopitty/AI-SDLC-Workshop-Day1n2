@@ -5,32 +5,32 @@ test.describe('Todo CRUD Operations', () => {
     // Navigate to the app
     await page.goto('/');
     // Wait for the page to load
-    await page.waitForSelector('h1:has-text("My Todos")');
+    await page.waitForSelector('h1:has-text("Todo App")');
   });
 
   test('should display the todo app interface', async ({ page }) => {
     // Check for main heading
-    await expect(page.locator('h1')).toContainText('My Todos');
+    await expect(page.locator('h1')).toContainText('Todo App');
     
     // Check for add todo form
-    await expect(page.locator('input[placeholder="What needs to be done?"]')).toBeVisible();
-    await expect(page.locator('button:has-text("Add Todo")')).toBeVisible();
+    await expect(page.locator('input[placeholder="Add a new todo..."]')).toBeVisible();
+    await expect(page.locator('button:has-text("Add")')).toBeVisible();
   });
 
   test('should create a todo with title only', async ({ page }) => {
     const todoTitle = 'Buy milk';
     
     // Fill in the title
-    await page.fill('input[placeholder="What needs to be done?"]', todoTitle);
+    await page.fill('input[placeholder="Add a new todo..."]', todoTitle);
     
     // Click Add Todo button
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
     
     // Wait for the todo to appear in the list
     await expect(page.locator(`text=${todoTitle}`).first()).toBeVisible();
     
     // Verify the input is cleared
-    await expect(page.locator('input[placeholder="What needs to be done?"]')).toHaveValue('');
+    await expect(page.locator('input[placeholder="Add a new todo..."]')).toHaveValue('');
   });
 
   test('should create a todo with title and due date', async ({ page }) => {
@@ -38,11 +38,11 @@ test.describe('Todo CRUD Operations', () => {
     const dueDate = '2026-12-25T14:30';
     
     // Fill in the form
-    await page.fill('input[placeholder="What needs to be done?"]', todoTitle);
+    await page.fill('input[placeholder="Add a new todo..."]', todoTitle);
     await page.fill('input[type="datetime-local"]', dueDate);
     
     // Submit
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
     
     // Verify todo appears
     await expect(page.locator(`text=${todoTitle}`).first()).toBeVisible();
@@ -55,8 +55,8 @@ test.describe('Todo CRUD Operations', () => {
     const todoTitle = 'Test completion';
     
     // Create a todo
-    await page.fill('input[placeholder="What needs to be done?"]', todoTitle);
-    await page.click('button:has-text("Add Todo")');
+    await page.fill('input[placeholder="Add a new todo..."]', todoTitle);
+    await page.click('button:has-text("Add")');
     await expect(page.locator(`text=${todoTitle}`).first()).toBeVisible();
     
     // Find the checkbox for this todo
@@ -83,8 +83,8 @@ test.describe('Todo CRUD Operations', () => {
     const updatedTitle = 'Updated task';
     
     // Create a todo
-    await page.fill('input[placeholder="What needs to be done?"]', originalTitle);
-    await page.click('button:has-text("Add Todo")');
+    await page.fill('input[placeholder="Add a new todo..."]', originalTitle);
+    await page.click('button:has-text("Add")');
     await expect(page.locator(`text=${originalTitle}`).first()).toBeVisible();
     
     // Click on the title to edit
@@ -112,8 +112,8 @@ test.describe('Todo CRUD Operations', () => {
     const todoTitle = 'Task to delete';
     
     // Create a todo
-    await page.fill('input[placeholder="What needs to be done?"]', todoTitle);
-    await page.click('button:has-text("Add Todo")');
+    await page.fill('input[placeholder="Add a new todo..."]', todoTitle);
+    await page.click('button:has-text("Add")');
     await expect(page.locator(`text=${todoTitle}`).first()).toBeVisible();
     
     // Find and click the delete button
@@ -138,8 +138,8 @@ test.describe('Todo CRUD Operations', () => {
     const todoTitle = 'Task to keep';
     
     // Create a todo
-    await page.fill('input[placeholder="What needs to be done?"]', todoTitle);
-    await page.click('button:has-text("Add Todo")');
+    await page.fill('input[placeholder="Add a new todo..."]', todoTitle);
+    await page.click('button:has-text("Add")');
     await expect(page.locator(`text=${todoTitle}`).first()).toBeVisible();
     
     // Find and click the delete button
@@ -178,7 +178,7 @@ test.describe('Todo CRUD Operations', () => {
 
   test('should validate empty title', async ({ page }) => {
     // Try to submit empty form
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
     
     // Should show error message
     await expect(page.locator('text=/Title cannot be empty/i')).toBeVisible();
@@ -192,9 +192,9 @@ test.describe('Todo CRUD Operations', () => {
     const dueDateStr = yesterday.toISOString().slice(0, 16);
     
     // Create todo with past due date
-    await page.fill('input[placeholder="What needs to be done?"]', todoTitle);
+    await page.fill('input[placeholder="Add a new todo..."]', todoTitle);
     await page.fill('input[type="datetime-local"]', dueDateStr);
-    await page.click('button:has-text("Add Todo")');
+    await page.click('button:has-text("Add")');
     
     // Wait for todo to appear
     await expect(page.locator(`text=${todoTitle}`).first()).toBeVisible();
@@ -210,8 +210,8 @@ test.describe('Todo CRUD Operations', () => {
     
     // Create multiple todos
     for (const todo of todos) {
-      await page.fill('input[placeholder="What needs to be done?"]', todo);
-      await page.click('button:has-text("Add Todo")');
+      await page.fill('input[placeholder="Add a new todo..."]', todo);
+      await page.click('button:has-text("Add")');
       await page.waitForTimeout(300);
     }
     
@@ -229,15 +229,15 @@ test.describe('Todo CRUD Operations', () => {
     const todoTitle = 'Persistent task';
     
     // Create a todo
-    await page.fill('input[placeholder="What needs to be done?"]', todoTitle);
-    await page.click('button:has-text("Add Todo")');
+    await page.fill('input[placeholder="Add a new todo..."]', todoTitle);
+    await page.click('button:has-text("Add")');
     await expect(page.locator(`text=${todoTitle}`).first()).toBeVisible();
     
     // Reload the page
     await page.reload();
     
     // Wait for page to load
-    await page.waitForSelector('h1:has-text("My Todos")');
+    await page.waitForSelector('h1:has-text("Todo App")');
     
     // Verify todo still exists
     await expect(page.locator(`text=${todoTitle}`).first()).toBeVisible();
