@@ -1,378 +1,390 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { formatSingaporeDate, isOverdue } from '@/lib/timezone';
+import { useState, useEffect, useMemo } from 'react';
+import { Priority, Todo } from '@/lib/db';
 
-interface Todo {
-  id: number;
-  user_id: number;
-  title: string;
-  completed: boolean;
-  due_date: string | null;
-  created_at: string;
-  updated_at: string;
+// Priority Badge Component
+function PriorityBadge({ 
+  priority, 
+  onClick, 
+  size = 'sm' 
+}: { 
+  priority: Priority; 
+  onClick?: () => void; 
+  size?: 'sm' | 'md';
+}) {
+  const colors = {
+    high: 'bg-red-500 text-white',
+    medium: 'bg-yellow-500 text-white',
+    low: 'bg-green-500 text-white',
+  };
+
+  const sizeClasses = {
+    sm: 'px-2 py-1 text-xs',
+    md: 'px-3 py-1.5 text-sm',
+  };
+
+  return (
+    <span
+      className={`rounded-full font-medium ${colors[priority]} ${sizeClasses[size]} ${
+        onClick ? 'cursor-pointer hover:opacity-80' : ''
+      }`}
+      onClick={onClick}
+      aria-label={`Priority: ${priority}`}
+    >
+      {priority.charAt(0).toUpperCase() + priority.slice(1)}
+    </span>
+  );
 }
 
-export default function HomePage() {
+// Priority Selector Component
+function PrioritySelector({
+  value,
+  onChange,
+  disabled = false,
+}: {
+  value: Priority;
+  onChange: (priority: Priority) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as Priority)}
+      disabled={disabled}
+      className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+  );
+}
+
+// Priority Filter Component
+function PriorityFilter({
+  todos,
+  selected,
+  onChange,
+}: {
+  todos: Todo[];
+  selected: Priority | 'all';
+  onChange: (filter: Priority | 'all') => void;
+}) {
+  const counts = {
+    all: todos.length,
+    high: todos.filter((t) => t.priority === 'high').length,
+    medium: todos.filter((t) => t.priority === 'medium').length,
+    low: todos.filter((t) => t.priority === 'low').length,
+  };
+
+  const filters: Array<{ label: string; value: Priority | 'all' }> = [
+    { label: 'All', value: 'all' },
+    { label: 'High', value: 'high' },
+    { label: 'Medium', value: 'medium' },
+    { label: 'Low', value: 'low' },
+  ];
+
+  return (
+    <div className="flex gap-2 mb-6">
+      {filters.map((filter) => (
+        <button
+          key={filter.value}
+          onClick={() => onChange(filter.value)}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            selected === filter.value
+              ? 'bg-blue-500 text-white'
+              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          {filter.label}{' '}
+          <span className="ml-1 text-sm">({counts[filter.value]})</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// Main Page Component
+export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [title, setTitle] = useState('');
+  const [priority, setPriority] = useState<Priority>('medium');
+  const [dueDate, setDueDate] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
+  const [sortByPriority, setSortByPriority] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sortByPriority') === 'true';
+    }
+    return false;
+  });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [newTodoTitle, setNewTodoTitle] = useState('');
-  const [newTodoDueDate, setNewTodoDueDate] = useState('');
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editingTitle, setEditingTitle] = useState('');
-  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // Fetch todos on mount
-  const fetchTodos = useCallback(async () => {
+  useEffect(() => {
+    fetchTodos();
+  }, []);
+
+  // Save sort preference to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sortByPriority', sortByPriority.toString());
+    }
+  }, [sortByPriority]);
+
+  const fetchTodos = async () => {
     try {
-      setLoading(true);
       const response = await fetch('/api/todos');
-      if (!response.ok) {
-        throw new Error('Failed to fetch todos');
-      }
       const data = await response.json();
       setTodos(data.todos || []);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (error) {
+      console.error('Failed to fetch todos:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    fetchTodos();
-  }, [fetchTodos]);
-
-  // Create new todo
-  const handleCreateTodo = async (e: React.FormEvent) => {
+  const addTodo = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!newTodoTitle.trim()) {
-      setError('Title cannot be empty');
-      return;
-    }
+    if (!title.trim()) return;
 
     try {
       const response = await fetch('/api/todos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: newTodoTitle,
-          due_date: newTodoDueDate || null,
+          title,
+          priority,
+          due_date: dueDate || null,
         }),
       });
 
-      if (!response.ok) {
+      if (response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to create todo');
+        setTodos([data.todo, ...todos]);
+        setTitle('');
+        setPriority('medium');
+        setDueDate('');
       }
-
-      const data = await response.json();
-      
-      // Optimistic update
-      setTodos([data.todo, ...todos]);
-      setNewTodoTitle('');
-      setNewTodoDueDate('');
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create todo');
+    } catch (error) {
+      console.error('Failed to add todo:', error);
     }
   };
 
-  // Toggle todo completion
-  const handleToggleComplete = async (id: number, completed: boolean) => {
-    // Optimistic update
-    setTodos(todos.map(todo => 
-      todo.id === id ? { ...todo, completed: !completed } : todo
-    ));
-
+  const updateTodo = async (
+    id: number,
+    updates: Partial<Pick<Todo, 'title' | 'completed' | 'priority'>>
+  ) => {
     try {
       const response = await fetch(`/api/todos/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: !completed }),
+        body: JSON.stringify(updates),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update todo');
+      if (response.ok) {
+        const data = await response.json();
+        setTodos(todos.map((t) => (t.id === id ? data.todo : t)));
       }
-
-      const data = await response.json();
-      setTodos(todos.map(todo => todo.id === id ? data.todo : todo));
-    } catch (err) {
-      // Revert on error
-      setTodos(todos.map(todo => 
-        todo.id === id ? { ...todo, completed } : todo
-      ));
-      setError(err instanceof Error ? err.message : 'Failed to update todo');
+    } catch (error) {
+      console.error('Failed to update todo:', error);
     }
   };
 
-  // Start editing
-  const handleStartEdit = (id: number, title: string) => {
-    setEditingId(id);
-    setEditingTitle(title);
-  };
-
-  // Save edited todo
-  const handleSaveEdit = async (id: number) => {
-    if (!editingTitle.trim()) {
-      setError('Title cannot be empty');
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/todos/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: editingTitle }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update todo');
-      }
-
-      const data = await response.json();
-      setTodos(todos.map(todo => todo.id === id ? data.todo : todo));
-      setEditingId(null);
-      setEditingTitle('');
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update todo');
-    }
-  };
-
-  // Cancel editing
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditingTitle('');
-  };
-
-  // Delete todo
-  const handleDeleteTodo = async (id: number) => {
-    setDeletingId(null);
-
-    // Optimistic update
-    const originalTodos = todos;
-    setTodos(todos.filter(todo => todo.id !== id));
+  const deleteTodo = async (id: number) => {
+    if (!confirm('Delete this todo? This cannot be undone.')) return;
 
     try {
       const response = await fetch(`/api/todos/${id}`, {
         method: 'DELETE',
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to delete todo');
+      if (response.ok) {
+        setTodos(todos.filter((t) => t.id !== id));
       }
-
-      setError(null);
-    } catch (err) {
-      // Revert on error
-      setTodos(originalTodos);
-      setError(err instanceof Error ? err.message : 'Failed to delete todo');
+    } catch (error) {
+      console.error('Failed to delete todo:', error);
     }
   };
 
+  // Filtered and sorted todos
+  const filteredTodos = useMemo(() => {
+    let result = todos;
+
+    // Apply priority filter
+    if (priorityFilter !== 'all') {
+      result = result.filter((t) => t.priority === priorityFilter);
+    }
+
+    // Apply priority sorting
+    if (sortByPriority) {
+      result = [...result].sort((a, b) => {
+        // Completed todos go to bottom
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+
+        // Priority order: high > medium > low
+        const priorityOrder: Record<Priority, number> = { high: 0, medium: 1, low: 2 };
+        if (a.priority !== b.priority) {
+          return priorityOrder[a.priority] - priorityOrder[b.priority];
+        }
+
+        // Within same priority, newest first
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    }
+
+    return result;
+  }, [todos, priorityFilter, sortByPriority]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            My Todos
-          </h1>
-          <p className="text-gray-600">
-            Manage your tasks efficiently
-          </p>
-        </header>
+    <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <h1 className="text-4xl font-bold text-gray-900 mb-8">Todo App</h1>
 
-        {/* Error message */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            {error}
+      {/* Add Todo Form */}
+      <form onSubmit={addTodo} className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              What needs to be done?
+            </label>
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter todo title..."
+              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              maxLength={500}
+            />
           </div>
-        )}
 
-        {/* Add todo form */}
-        <form onSubmit={handleCreateTodo} className="mb-8 bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-semibold mb-4 text-gray-900">Add New Todo</h2>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                Title
+              <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+                Priority
               </label>
-              <input
-                id="title"
-                type="text"
-                value={newTodoTitle}
-                onChange={(e) => setNewTodoTitle(e.target.value)}
-                placeholder="What needs to be done?"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                maxLength={500}
-                autoFocus
-              />
+              <PrioritySelector value={priority} onChange={setPriority} />
             </div>
+
             <div>
-              <label htmlFor="due_date" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
                 Due Date (optional)
               </label>
               <input
-                id="due_date"
+                id="dueDate"
                 type="datetime-local"
-                value={newTodoDueDate}
-                onChange={(e) => setNewTodoDueDate(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              Add Todo
-            </button>
           </div>
-        </form>
 
-        {/* Todos list */}
-        <div className="bg-white rounded-lg shadow-sm">
-          {loading ? (
-            <div className="p-8 text-center text-gray-500">
-              Loading todos...
-            </div>
-          ) : todos.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <p className="text-lg">No todos yet. Add your first task above!</p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-gray-200">
-              {todos.map((todo) => (
-                <li key={todo.id} className="p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start gap-3">
-                    {/* Checkbox */}
-                    <input
-                      type="checkbox"
-                      checked={todo.completed}
-                      onChange={() => handleToggleComplete(todo.id, todo.completed)}
-                      className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      aria-label={`Mark "${todo.title}" as ${todo.completed ? 'incomplete' : 'complete'}`}
-                    />
-
-                    {/* Todo content */}
-                    <div className="flex-1 min-w-0">
-                      {editingId === todo.id ? (
-                        // Edit mode
-                        <div className="space-y-2">
-                          <input
-                            type="text"
-                            value={editingTitle}
-                            onChange={(e) => setEditingTitle(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleSaveEdit(todo.id);
-                              } else if (e.key === 'Escape') {
-                                handleCancelEdit();
-                              }
-                            }}
-                            className="w-full px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            maxLength={500}
-                            autoFocus
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleSaveEdit(todo.id)}
-                              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={handleCancelEdit}
-                              className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        // View mode
-                        <>
-                          <div
-                            onClick={() => handleStartEdit(todo.id, todo.title)}
-                            className={`text-lg cursor-pointer ${
-                              todo.completed ? 'line-through text-gray-400' : 'text-gray-900'
-                            }`}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleStartEdit(todo.id, todo.title);
-                              }
-                            }}
-                          >
-                            {todo.title}
-                          </div>
-                          {todo.due_date && (
-                            <div
-                              className={`text-sm mt-1 ${
-                                isOverdue(todo.due_date) && !todo.completed
-                                  ? 'text-red-600 font-medium'
-                                  : 'text-gray-500'
-                              }`}
-                            >
-                              Due: {formatSingaporeDate(new Date(todo.due_date), 'datetime')}
-                              {isOverdue(todo.due_date) && !todo.completed && ' (Overdue)'}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    {/* Delete button */}
-                    {editingId !== todo.id && (
-                      <button
-                        onClick={() => setDeletingId(todo.id)}
-                        className="text-red-600 hover:text-red-700 p-1"
-                        aria-label={`Delete "${todo.title}"`}
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+          >
+            Add Todo
+          </button>
         </div>
+      </form>
 
-        {/* Delete confirmation modal */}
-        {deletingId !== null && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
-              <h3 className="text-lg font-semibold mb-2 text-gray-900">Delete Todo</h3>
-              <p className="text-gray-600 mb-6">
-                Delete this todo? This cannot be undone.
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setDeletingId(null)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+      {/* Priority Filter */}
+      <PriorityFilter
+        todos={todos}
+        selected={priorityFilter}
+        onChange={setPriorityFilter}
+      />
+
+      {/* Sort Toggle */}
+      <div className="mb-6">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={sortByPriority}
+            onChange={(e) => setSortByPriority(e.target.checked)}
+            className="w-4 h-4 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          />
+          <span className="text-sm font-medium text-gray-700">
+            Sort by priority (high → medium → low)
+          </span>
+        </label>
+      </div>
+
+      {/* Todo List */}
+      <div className="space-y-3">
+        {filteredTodos.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
+            {priorityFilter === 'all'
+              ? 'No todos yet. Add your first task above!'
+              : `No ${priorityFilter} priority tasks.`}
+          </div>
+        ) : (
+          filteredTodos.map((todo) => (
+            <div
+              key={todo.id}
+              className={`bg-white rounded-lg shadow-md p-4 flex items-start gap-4 ${
+                todo.completed ? 'opacity-60' : ''
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                onChange={(e) => updateTodo(todo.id, { completed: e.target.checked })}
+                className="mt-1 w-5 h-5 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              />
+
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <PriorityBadge priority={todo.priority} />
+                  {todo.due_date && (
+                    <span className="text-xs text-gray-500">
+                      Due: {new Date(todo.due_date).toLocaleString('en-US', {
+                        timeZone: 'Asia/Singapore',
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  )}
+                </div>
+
+                <h3
+                  className={`text-lg font-medium ${
+                    todo.completed ? 'line-through text-gray-500' : 'text-gray-900'
+                  }`}
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDeleteTodo(deletingId)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Delete
-                </button>
+                  {todo.title}
+                </h3>
+
+                <div className="mt-2 flex items-center gap-4">
+                  <PrioritySelector
+                    value={todo.priority}
+                    onChange={(newPriority) => updateTodo(todo.id, { priority: newPriority })}
+                  />
+
+                  <button
+                    onClick={() => deleteTodo(todo.id)}
+                    className="text-sm text-red-600 hover:text-red-800 font-medium"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          ))
         )}
       </div>
-    </div>
+    </main>
   );
 }

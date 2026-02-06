@@ -1,136 +1,115 @@
 /**
- * API Routes: /api/todos/[id]
- * GET - Get single todo
- * PUT - Update todo
- * DELETE - Delete todo
+ * GET /api/todos/[id] - Get a specific todo
+ * PUT /api/todos/[id] - Update a todo
+ * DELETE /api/todos/[id] - Delete a todo
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { todoDB, userDB, Priority } from '@/lib/db';
 import { getDemoSession } from '@/lib/auth';
-import { todoDB } from '@/lib/db';
 
-/**
- * GET /api/todos/[id]
- * Get single todo by ID
- */
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+type RouteParams = {
+  params: Promise<{ id: string }>;
+};
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getDemoSession();
-    const { id } = await context.params;
-    const todoId = parseInt(id, 10);
+    
+    // Ensure demo user exists in database
+    userDB.getOrCreate(session.username);
 
-    if (isNaN(todoId)) {
-      return NextResponse.json({ error: 'Invalid todo ID' }, { status: 400 });
-    }
-
-    const todo = todoDB.get(todoId, session.userId);
+    const { id } = await params;
+    const todo = todoDB.findById(parseInt(id));
 
     if (!todo) {
       return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
     }
 
+    if (todo.user_id !== session.userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     return NextResponse.json({ todo });
   } catch (error) {
-    console.error('Error fetching todo:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch todo' },
-      { status: 500 }
-    );
+    console.error('GET /api/todos/[id] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-/**
- * PUT /api/todos/[id]
- * Update todo
- */
-export async function PUT(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getDemoSession();
-    const { id } = await context.params;
-    const todoId = parseInt(id, 10);
+    
+    // Ensure demo user exists in database
+    userDB.getOrCreate(session.username);
 
-    if (isNaN(todoId)) {
-      return NextResponse.json({ error: 'Invalid todo ID' }, { status: 400 });
+    const { id } = await params;
+    const todo = todoDB.findById(parseInt(id));
+
+    if (!todo) {
+      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
+    }
+
+    if (todo.user_id !== session.userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();
-    const { title, completed, due_date } = body;
+    const { title, completed, due_date, priority } = body;
 
-    // Build update data
-    const updateData: any = {};
+    // Validation
     if (title !== undefined) {
       if (typeof title !== 'string' || title.trim().length === 0) {
-        return NextResponse.json(
-          { error: 'Title cannot be empty' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Title cannot be empty' }, { status: 400 });
       }
       if (title.length > 500) {
-        return NextResponse.json(
-          { error: 'Title must be 500 characters or less' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Title must be 500 characters or less' }, { status: 400 });
       }
-      updateData.title = title.trim();
-    }
-    if (completed !== undefined) {
-      updateData.completed = Boolean(completed);
-    }
-    if (due_date !== undefined) {
-      updateData.due_date = due_date;
     }
 
-    const todo = todoDB.update(todoId, session.userId, updateData);
+    if (priority !== undefined && !['high', 'medium', 'low'].includes(priority)) {
+      return NextResponse.json({ error: 'Invalid priority. Must be high, medium, or low.' }, { status: 400 });
+    }
+
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (completed !== undefined) updateData.completed = completed;
+    if (due_date !== undefined) updateData.due_date = due_date;
+    if (priority !== undefined) updateData.priority = priority;
+
+    const updatedTodo = todoDB.update(parseInt(id), updateData);
+
+    return NextResponse.json({ todo: updatedTodo });
+  } catch (error) {
+    console.error('PUT /api/todos/[id] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const session = await getDemoSession();
+    
+    // Ensure demo user exists in database
+    userDB.getOrCreate(session.username);
+
+    const { id } = await params;
+    const todo = todoDB.findById(parseInt(id));
 
     if (!todo) {
       return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ todo });
-  } catch (error) {
-    console.error('Error updating todo:', error);
-    return NextResponse.json(
-      { error: 'Failed to update todo' },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * DELETE /api/todos/[id]
- * Delete todo
- */
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getDemoSession();
-    const { id } = await context.params;
-    const todoId = parseInt(id, 10);
-
-    if (isNaN(todoId)) {
-      return NextResponse.json({ error: 'Invalid todo ID' }, { status: 400 });
+    if (todo.user_id !== session.userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const deleted = todoDB.delete(todoId, session.userId);
+    todoDB.delete(parseInt(id));
 
-    if (!deleted) {
-      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
-    }
-
-    return new NextResponse(null, { status: 204 });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting todo:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete todo' },
-      { status: 500 }
-    );
+    console.error('DELETE /api/todos/[id] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

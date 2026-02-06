@@ -1,67 +1,38 @@
 /**
  * Singapore Timezone Utilities
- * All date/time operations use Asia/Singapore timezone (UTC+8)
+ * All date/time operations in the app must use Singapore timezone (Asia/Singapore)
  */
+
+const SINGAPORE_TZ = 'Asia/Singapore';
 
 /**
  * Get current date/time in Singapore timezone
  */
 export function getSingaporeNow(): Date {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+  return new Date(new Date().toLocaleString('en-US', { timeZone: SINGAPORE_TZ }));
 }
 
 /**
- * Format date for Singapore timezone
- * @param date - Date to format
- * @param format - Format type ('short', 'long', 'datetime')
+ * Format a date to Singapore timezone string
  */
-export function formatSingaporeDate(date: Date | string, format: 'short' | 'long' | 'datetime' = 'long'): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
-  if (format === 'short') {
-    return dateObj.toLocaleDateString('en-US', { 
-      timeZone: 'Asia/Singapore',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  }
-  
-  if (format === 'datetime') {
-    return dateObj.toLocaleString('en-US', {
-      timeZone: 'Asia/Singapore',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  }
-  
-  return dateObj.toLocaleDateString('en-US', {
-    timeZone: 'Asia/Singapore',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
+export function formatSingaporeDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
+  return date.toLocaleString('en-US', { 
+    timeZone: SINGAPORE_TZ,
+    ...options 
   });
 }
 
 /**
- * Convert date to ISO string in Singapore timezone
+ * Convert a date to ISO string in Singapore timezone
  */
 export function toSingaporeISO(date: Date): string {
-  const offset = 8 * 60; // Singapore is UTC+8
-  const localDate = new Date(date.getTime() + offset * 60 * 1000);
-  return localDate.toISOString().replace('Z', '+08:00');
+  return new Date(date.toLocaleString('en-US', { timeZone: SINGAPORE_TZ })).toISOString();
 }
 
 /**
- * Check if a date is overdue
+ * Parse a date string as Singapore timezone
  */
-export function isOverdue(dueDate: string | null): boolean {
-  if (!dueDate) return false;
-  const now = getSingaporeNow();
-  const due = new Date(dueDate);
-  return due < now;
+export function parseSingaporeDate(dateString: string): Date {
+  const date = new Date(dateString);
+  return new Date(date.toLocaleString('en-US', { timeZone: SINGAPORE_TZ }));
 }
