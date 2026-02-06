@@ -6,6 +6,19 @@ Reference : https://ai-sdlc-workshop-day1-production.up.railway.app/login
 
 ---
 
+## 🚀 Quick Links
+
+- **📚 Implementation Guides**: Complete documentation for implementing features
+  - [Calendar View Package](CALENDAR_VIEW_PACKAGE.md) - Complete implementation guide for PRP 10
+  - [Developer Onboarding](docs/calendar-view-developer-onboarding.md) - Start here for calendar feature
+  - [All Implementation Docs](docs/) - Full documentation suite
+
+- **📖 Product Requirements**: Feature specifications and architecture
+  - [PRPs Directory](PRPs/) - All 11 feature specifications
+  - [Architecture Overview](PRPs/ARCHITECTURE.md) - System design summary
+
+---
+
 ## Table of Contents
 1. [Install Visual Studio Code](#1-install-visual-studio-code)
 2. [Install GitHub Copilot](#2-install-github-copilot)
