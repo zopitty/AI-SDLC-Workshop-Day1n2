@@ -1,9 +1,6 @@
 {
   "compilerOptions": {
-<<<<<<< HEAD
     "target": "ES2022",
-=======
->>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
     "lib": [
       "dom",
       "dom.iterable",
@@ -12,10 +9,7 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
-<<<<<<< HEAD
     "forceConsistentCasingInFileNames": true,
-=======
->>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -33,12 +27,7 @@
       "@/*": [
         "./*"
       ]
-<<<<<<< HEAD
     }
-=======
-    },
-    "target": "ES2017"
->>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
   },
   "include": [
     "next-env.d.ts",
@@ -48,6 +37,10 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "docs",
+    "examples",
+    "reference-implementation",
+    "todo-app"
   ]
 }
