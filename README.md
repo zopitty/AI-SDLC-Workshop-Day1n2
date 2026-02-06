@@ -24,6 +24,9 @@ Reference : https://ai-sdlc-workshop-day1-production.up.railway.app/login
   - [PRPs Directory](PRPs/) - All 11 feature specifications
   - [Architecture Overview](PRPs/ARCHITECTURE.md) - System design summary
 
+- **🚢 Deployment**: Deploy to production
+  - [Railway Deployment Guide](docs/railway-deployment.md) - Complete guide for deploying to Railway.app
+
 ---
 
 ## Table of Contents
