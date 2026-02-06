@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import Database from 'better-sqlite3';
 import { getSingaporeNow } from './timezone';
 
@@ -11,12 +12,25 @@ export interface User {
   username: string;
   created_at: string;
 }
+=======
+/**
+ * Database Layer - Single source of truth for all DB operations
+ * Uses better-sqlite3 (synchronous SQLite)
+ */
+
+import Database from 'better-sqlite3';
+import path from 'path';
+
+// Types
+export type Priority = 'high' | 'medium' | 'low';
+>>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
 
 export interface Todo {
   id: number;
   user_id: number;
   title: string;
   completed: boolean;
+<<<<<<< HEAD
   priority: Priority;
   due_date: string | null;
   is_recurring: boolean;
@@ -38,12 +52,30 @@ export interface Subtask {
   title: string;
   completed: boolean;
   position: number;
+=======
+  due_date: string | null;
+  priority: Priority;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface User {
+  id: number;
+  username: string;
+>>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
   created_at: string;
 }
 
 // Initialize database
+<<<<<<< HEAD
 const db = new Database('todos.db');
 db.pragma('journal_mode = WAL');
+=======
+const dbPath = path.join(process.cwd(), 'todos.db');
+const db = new Database(dbPath);
+
+// Enable foreign keys
+>>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
 db.pragma('foreign_keys = ON');
 
 // Create tables
@@ -59,16 +91,22 @@ db.exec(`
     user_id INTEGER NOT NULL,
     title TEXT NOT NULL CHECK(length(title) <= 500 AND length(trim(title)) > 0),
     completed INTEGER DEFAULT 0 NOT NULL,
+<<<<<<< HEAD
     priority TEXT DEFAULT 'medium' CHECK(priority IN ('high', 'medium', 'low')),
     due_date TEXT,
     is_recurring INTEGER DEFAULT 0 NOT NULL,
     recurrence_pattern TEXT CHECK(recurrence_pattern IN ('daily', 'weekly', 'monthly', 'yearly') OR recurrence_pattern IS NULL),
     reminder_minutes INTEGER,
+=======
+    due_date TEXT,
+    priority TEXT DEFAULT 'medium' NOT NULL CHECK(priority IN ('high', 'medium', 'low')),
+>>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+<<<<<<< HEAD
   CREATE TABLE IF NOT EXISTS subtasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     todo_id INTEGER NOT NULL,
@@ -94,10 +132,27 @@ export const userDB = {
   },
 
   getById(id: number): User | null {
+=======
+  CREATE INDEX IF NOT EXISTS idx_todos_user_id ON todos(user_id);
+  CREATE INDEX IF NOT EXISTS idx_todos_due_date ON todos(due_date);
+  CREATE INDEX IF NOT EXISTS idx_todos_priority ON todos(priority);
+`);
+
+// User operations
+export const userDB = {
+  create: (username: string): User => {
+    const stmt = db.prepare('INSERT INTO users (username) VALUES (?)');
+    const result = stmt.run(username);
+    return userDB.findById(result.lastInsertRowid as number)!;
+  },
+
+  findById: (id: number): User | null => {
+>>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
     const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
     return stmt.get(id) as User | null;
   },
 
+<<<<<<< HEAD
   getByUsername(username: string): User | null {
     const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
     return stmt.get(username) as User | null;
@@ -319,4 +374,118 @@ export function calculateProgress(subtasks: Subtask[]): {
   return { total, completed, percentage };
 }
 
+=======
+  findByUsername: (username: string): User | null => {
+    const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
+    return stmt.get(username) as User | null;
+  },
+
+  getOrCreate: (username: string): User => {
+    let user = userDB.findByUsername(username);
+    if (!user) {
+      user = userDB.create(username);
+    }
+    return user;
+  },
+};
+
+// Todo operations
+export const todoDB = {
+  create: (userId: number, data: { 
+    title: string; 
+    due_date?: string | null;
+    priority?: Priority;
+  }): Todo => {
+    const stmt = db.prepare(`
+      INSERT INTO todos (user_id, title, due_date, priority, completed)
+      VALUES (?, ?, ?, ?, 0)
+    `);
+    const result = stmt.run(
+      userId,
+      data.title.trim(),
+      data.due_date || null,
+      data.priority || 'medium'
+    );
+    return todoDB.findById(result.lastInsertRowid as number)!;
+  },
+
+  findById: (id: number): Todo | null => {
+    const stmt = db.prepare('SELECT * FROM todos WHERE id = ?');
+    const row = stmt.get(id) as any;
+    if (!row) return null;
+    return {
+      ...row,
+      completed: Boolean(row.completed),
+    };
+  },
+
+  list: (userId: number): Todo[] => {
+    const stmt = db.prepare(`
+      SELECT * FROM todos 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC
+    `);
+    const rows = stmt.all(userId) as any[];
+    return rows.map(row => ({
+      ...row,
+      completed: Boolean(row.completed),
+    }));
+  },
+
+  listByPriority: (userId: number, priority: Priority): Todo[] => {
+    const stmt = db.prepare(`
+      SELECT * FROM todos 
+      WHERE user_id = ? AND priority = ?
+      ORDER BY created_at DESC
+    `);
+    const rows = stmt.all(userId, priority) as any[];
+    return rows.map(row => ({
+      ...row,
+      completed: Boolean(row.completed),
+    }));
+  },
+
+  update: (id: number, data: Partial<Pick<Todo, 'title' | 'completed' | 'due_date' | 'priority'>>): Todo | null => {
+    const updates: string[] = [];
+    const values: any[] = [];
+
+    if (data.title !== undefined) {
+      updates.push('title = ?');
+      values.push(data.title.trim());
+    }
+    if (data.completed !== undefined) {
+      updates.push('completed = ?');
+      values.push(data.completed ? 1 : 0);
+    }
+    if (data.due_date !== undefined) {
+      updates.push('due_date = ?');
+      values.push(data.due_date);
+    }
+    if (data.priority !== undefined) {
+      updates.push('priority = ?');
+      values.push(data.priority);
+    }
+
+    if (updates.length === 0) return todoDB.findById(id);
+
+    updates.push('updated_at = datetime(\'now\')');
+    values.push(id);
+
+    const stmt = db.prepare(`
+      UPDATE todos 
+      SET ${updates.join(', ')}
+      WHERE id = ?
+    `);
+    stmt.run(...values);
+    return todoDB.findById(id);
+  },
+
+  delete: (id: number): boolean => {
+    const stmt = db.prepare('DELETE FROM todos WHERE id = ?');
+    const result = stmt.run(id);
+    return result.changes > 0;
+  },
+};
+
+>>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
 export default db;

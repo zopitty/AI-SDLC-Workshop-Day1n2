@@ -1,13 +1,22 @@
+<<<<<<< HEAD
 # dependencies
+=======
+# Dependencies
+>>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
 /node_modules
 /.pnp
 .pnp.js
 
+<<<<<<< HEAD
 # testing
+=======
+# Testing
+>>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
 /coverage
 /playwright-report
 /test-results
 
+<<<<<<< HEAD
 # next.js
 /.next/
 /out/
@@ -20,10 +29,25 @@
 *.pem
 
 # debug
+=======
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+>>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+<<<<<<< HEAD
 # local env files
 .env*.local
 .env
@@ -42,3 +66,20 @@ todos.db-journal
 # IDE
 .vscode
 .idea
+=======
+# Local env files
+.env*.local
+.env
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+>>>>>>> b2574c13dd2cac1a1b2477f1115ab91683911771
